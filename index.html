@@ -377,6 +377,26 @@
                 });
             }
             
+            // Função para mostrar apenas uma tela por vez
+            function mostrarTela(telaId) {
+                // Lista de todas as telas principais
+                const telas = ['main-screen', 'provider-profile-screen', 'user-profile-screen'];
+                
+                // Esconder todas as telas
+                telas.forEach(id => {
+                    const elemento = document.getElementById(id);
+                    if (elemento) {
+                        elemento.classList.add('hidden');
+                    }
+                });
+                
+                // Mostrar apenas a tela desejada
+                const telaParaMostrar = document.getElementById(telaId);
+                if (telaParaMostrar) {
+                    telaParaMostrar.classList.remove('hidden');
+                }
+            }
+            
             // Verificar se está logado
             if (typeof navigation !== 'undefined') {
                 const loggedIn = await navigation.isLoggedIn();
@@ -401,13 +421,8 @@
                         if (userEmailValue) userEmailValue.textContent = userData.email;
                         if (userLocation) userLocation.textContent = userData.localizacao || window.CONFIG?.DEFAULT_LOCATION || 'São Paulo, SP';
                         
-                        // Mostrar tela de perfil do usuário
-                        const mainScreen = document.getElementById('main-screen');
-                        const userProfileScreen = document.getElementById('user-profile-screen');
-                        if (mainScreen && userProfileScreen) {
-                            mainScreen.classList.add('hidden');
-                            userProfileScreen.classList.remove('hidden');
-                        }
+                        // Mostrar tela de perfil do usuário usando a função mostrarTela
+                        mostrarTela('user-profile-screen');
                     });
                     
                     // Configurar botão de logout
@@ -524,27 +539,19 @@
                         });
                     }
                     
-                    // Configurar voltar dos perfis
+                    // Configurar voltar dos perfis usando a função mostrarTela
                     const backFromProvider = document.getElementById('back-from-provider');
                     const backFromUser = document.getElementById('back-from-user');
+                    
                     if (backFromProvider) {
                         backFromProvider.addEventListener('click', function() {
-                            const mainScreen = document.getElementById('main-screen');
-                            const providerProfileScreen = document.getElementById('provider-profile-screen');
-                            if (mainScreen && providerProfileScreen) {
-                                providerProfileScreen.classList.add('hidden');
-                                mainScreen.classList.remove('hidden');
-                            }
+                            mostrarTela('main-screen');
                         });
                     }
+                    
                     if (backFromUser) {
                         backFromUser.addEventListener('click', function() {
-                            const mainScreen = document.getElementById('main-screen');
-                            const userProfileScreen = document.getElementById('user-profile-screen');
-                            if (mainScreen && userProfileScreen) {
-                                userProfileScreen.classList.add('hidden');
-                                mainScreen.classList.remove('hidden');
-                            }
+                            mostrarTela('main-screen');
                         });
                     }
                     

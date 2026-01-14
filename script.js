@@ -403,13 +403,14 @@ function aplicarOrdenacao() {
     }
 }
 
+// Encontre a função abrirPerfilPrestador no script.js e substitua por esta versão:
+
 // Abrir perfil do prestador
 function abrirPerfilPrestador(servico) {
-    const mainScreen = document.getElementById('main-screen');
+    // Verificar se estamos no contexto correto (index.html)
     const providerProfileScreen = document.getElementById('provider-profile-screen');
-    
-    if (!mainScreen || !providerProfileScreen) {
-        console.error('❌ Elementos de tela não encontrados');
+    if (!providerProfileScreen) {
+        console.error('❌ Não está na página principal (index.html)');
         return;
     }
     
@@ -429,7 +430,7 @@ function abrirPerfilPrestador(servico) {
     if (providerDistance) providerDistance.textContent = `${servico.distancia.toFixed(1)} km`;
     if (providerDescription) providerDescription.textContent = servico.descricao;
     
-    // MUDANÇA: Mostrar "Contato" no lugar do preço
+    // Mostrar "Contato" no lugar do preço
     if (providerPrice) {
         providerPrice.textContent = 'Contato';
         // Atualizar o label também
@@ -439,8 +440,18 @@ function abrirPerfilPrestador(servico) {
         }
     }
     
-    mainScreen.classList.add('hidden');
-    providerProfileScreen.classList.remove('hidden');
+    // Usar a função mostrarTela se estiver disponível, caso contrário usar método direto
+    if (typeof mostrarTela === 'function') {
+        mostrarTela('provider-profile-screen');
+    } else {
+        // Fallback: método direto
+        const mainScreen = document.getElementById('main-screen');
+        const userProfileScreen = document.getElementById('user-profile-screen');
+        
+        if (mainScreen) mainScreen.classList.add('hidden');
+        if (userProfileScreen) userProfileScreen.classList.add('hidden');
+        if (providerProfileScreen) providerProfileScreen.classList.remove('hidden');
+    }
 }
 
 // Configurar event listeners
