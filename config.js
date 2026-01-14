@@ -82,7 +82,7 @@ async function loadServices() {
             return [];
         }
     }
-    return [];
+    return []; // Retorna array vazio quando não há serviços
 }
 
 // Exportar para uso global

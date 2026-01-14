@@ -752,25 +752,7 @@
                 
                 // Verificar se Firebase está disponível
                 if (!isFirebaseAvailable()) {
-                    showToast('Firebase não está disponível. Usando sistema local.', 'warning');
-                    
-                    // Fallback para localStorage
-                    localStorage.setItem('isLoggedIn', 'true');
-                    localStorage.setItem('userName', userData.nome);
-                    localStorage.setItem('userEmail', userData.email);
-                    localStorage.setItem('userPhone', userData.telefone);
-                    localStorage.setItem('userLocation', userData.localizacao);
-                    localStorage.setItem('userType', userData.tipo);
-                    
-                    if (userData.tipo === 'provider') {
-                        localStorage.setItem('userCategory', userData.categoria);
-                        localStorage.setItem('userDescription', userData.descricao);
-                    }
-                    
-                    showToast('Conta criada com sucesso! Redirecionando...', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1500);
+                    showToast('Sistema de cadastro não disponível no momento. Tente novamente mais tarde.', 'error');
                     return;
                 }
                 
@@ -778,8 +760,13 @@
                     // Mostrar loading
                     showLoading(completeRegister);
                     
+                    // Verificar se Firebase Auth está disponível
+                    if (!window.firebaseAuth || !window.firebaseAuth.createUserWithEmailAndPassword) {
+                        throw new Error('Firebase Auth não inicializado');
+                    }
+                    
                     // 1. Criar usuário no Firebase Authentication
-                    const userCredential = await firebaseAuth.createUserWithEmailAndPassword(userData.email, password);
+                    const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(userData.email, password);
                     const user = userCredential.user;
                     
                     // 2. Atualizar display name no Firebase Auth
@@ -788,28 +775,30 @@
                     });
                     
                     // 3. Salvar dados adicionais no Firestore (coleção users)
-                    await firebaseDb.collection('users').doc(user.uid).set({
-                        ...userData,
-                        uid: user.uid,
-                        dataAtualizacao: new Date().toISOString()
-                    });
-                    
-                    // 4. Se for prestador, criar também na coleção de prestadores
-                    if (userData.tipo === 'provider') {
-                        await firebaseDb.collection('prestadores').doc(user.uid).set({
-                            nome: userData.nome,
-                            email: userData.email,
-                            telefone: userData.telefone,
-                            localizacao: userData.localizacao,
-                            categoria: userData.categoria,
-                            descricao: userData.descricao,
-                            avaliacaoMedia: 0,
-                            totalAvaliacoes: 0,
-                            totalServicos: 0,
-                            ativo: true,
-                            dataCadastro: new Date().toISOString(),
+                    if (window.firebaseDb && window.firebaseDb.collection) {
+                        await window.firebaseDb.collection('users').doc(user.uid).set({
+                            ...userData,
+                            uid: user.uid,
                             dataAtualizacao: new Date().toISOString()
                         });
+                        
+                        // 4. Se for prestador, criar também na coleção de prestadores
+                        if (userData.tipo === 'provider') {
+                            await window.firebaseDb.collection('prestadores').doc(user.uid).set({
+                                nome: userData.nome,
+                                email: userData.email,
+                                telefone: userData.telefone,
+                                localizacao: userData.localizacao,
+                                categoria: userData.categoria,
+                                descricao: userData.descricao,
+                                avaliacaoMedia: 0,
+                                totalAvaliacoes: 0,
+                                totalServicos: 0,
+                                ativo: true,
+                                dataCadastro: new Date().toISOString(),
+                                dataAtualizacao: new Date().toISOString()
+                            });
+                        }
                     }
                     
                     // 5. Salvar dados básicos no localStorage
@@ -850,30 +839,34 @@
                     let errorMessage = 'Erro ao criar conta. Tente novamente.';
                     let errorField = 'general';
                     
-                    switch (error.code) {
-                        case 'auth/email-already-in-use':
-                            errorMessage = 'Este e-mail já está em uso. Tente fazer login ou usar outro e-mail.';
-                            errorField = 'email';
-                            break;
-                        case 'auth/invalid-email':
-                            errorMessage = 'E-mail inválido. Verifique o formato.';
-                            errorField = 'email';
-                            break;
-                        case 'auth/weak-password':
-                            errorMessage = 'Senha muito fraca. Use pelo menos 6 caracteres.';
-                            errorField = 'password';
-                            break;
-                        case 'auth/operation-not-allowed':
-                            errorMessage = 'Cadastro por e-mail/senha não está habilitado. Contate o suporte.';
-                            break;
-                        case 'auth/network-request-failed':
-                            errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
-                            break;
-                        case 'firestore/permission-denied':
-                            errorMessage = 'Permissão negada. Contate o suporte técnico.';
-                            break;
-                        default:
-                            errorMessage = error.message || 'Erro desconhecido. Tente novamente.';
+                    if (error.code) {
+                        switch (error.code) {
+                            case 'auth/email-already-in-use':
+                                errorMessage = 'Este e-mail já está em uso. Tente fazer login ou usar outro e-mail.';
+                                errorField = 'email';
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessage = 'E-mail inválido. Verifique o formato.';
+                                errorField = 'email';
+                                break;
+                            case 'auth/weak-password':
+                                errorMessage = 'Senha muito fraca. Use pelo menos 6 caracteres.';
+                                errorField = 'password';
+                                break;
+                            case 'auth/operation-not-allowed':
+                                errorMessage = 'Cadastro por e-mail/senha não está habilitado. Contate o suporte.';
+                                break;
+                            case 'auth/network-request-failed':
+                                errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+                                break;
+                            case 'firestore/permission-denied':
+                                errorMessage = 'Permissão negada. Contate o suporte técnico.';
+                                break;
+                            default:
+                                errorMessage = error.message || 'Erro desconhecido. Tente novamente.';
+                        }
+                    } else {
+                        errorMessage = error.message || 'Erro desconhecido. Tente novamente.';
                     }
                     
                     // Mostrar erro no campo específico

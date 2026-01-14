@@ -251,15 +251,7 @@
                     }
                     
                     if (!isFirebaseAvailable()) {
-                        showToast('Firebase não está disponível. Usando sistema local.', 'warning');
-                        // Fallback para localStorage
-                        localStorage.setItem('isLoggedIn', 'true');
-                        localStorage.setItem('userEmail', email);
-                        localStorage.setItem('userName', email.split('@')[0]);
-                        showToast('Login realizado com sucesso!', 'success');
-                        setTimeout(() => {
-                            window.location.href = 'index.html';
-                        }, 1000);
+                        showToast('Sistema de autenticação não disponível no momento. Tente novamente mais tarde.', 'error');
                         return;
                     }
                 }
@@ -290,10 +282,17 @@
                             if (userDoc.exists) {
                                 const data = userDoc.data();
                                 userData = { ...userData, ...data };
+                            } else {
+                                // Usuário não existe no Firestore - criar registro básico
+                                await window.firebaseDb.collection('users').doc(user.uid).set({
+                                    ...userData,
+                                    dataCadastro: new Date().toISOString(),
+                                    tipo: 'client'
+                                }, { merge: true });
                             }
                         }
                     } catch (error) {
-                        console.log('Usuário não encontrado no Firestore, usando dados básicos');
+                        console.log('Erro ao buscar/criar usuário no Firestore:', error);
                     }
                     
                     // Salvar dados no localStorage

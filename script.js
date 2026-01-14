@@ -117,7 +117,7 @@ function showToast(message, type = 'info') {
 async function carregarServicosFirestore() {
     // Verificar disponibilidade do Firebase
     if (!isFirebaseAvailable()) {
-        console.log('ℹ️ Firebase não disponível, usando dados locais');
+        console.log('ℹ️ Firebase não disponível');
         
         // Tentar inicializar Firebase
         if (typeof initializeFirebase === 'function') {
@@ -127,9 +127,9 @@ async function carregarServicosFirestore() {
         }
         
         if (!isFirebaseAvailable()) {
-            console.log('⚠️ Firebase não inicializado, criando dados de exemplo');
-            criarDadosExemplo();
-            return true;
+            console.log('⚠️ Firebase não inicializado, exibindo estado vazio');
+            mostrarEstadoVazio();
+            return false;
         }
     }
     
@@ -177,51 +177,42 @@ async function carregarServicosFirestore() {
             return true;
         } else {
             console.log('ℹ️ Nenhum prestador encontrado no Firestore');
-            criarDadosExemplo();
-            return true;
+            mostrarEstadoVazio();
+            return false;
         }
     } catch (error) {
         console.error('❌ Erro ao carregar serviços do Firestore:', error);
-        criarDadosExemplo();
-        return true;
+        mostrarEstadoVazio();
+        return false;
     } finally {
         carregandoServicos = false;
     }
 }
 
-// Criar dados de exemplo quando Firebase não está disponível
-function criarDadosExemplo() {
-    console.log('🛠️ Criando dados de exemplo...');
+// Mostrar estado vazio (sem serviços)
+function mostrarEstadoVazio() {
+    console.log('📭 Nenhum serviço disponível');
     
     // Limpar array existente
     servicos.length = 0;
-    
-    // Dados de exemplo
-    const categorias = window.CONFIG?.CATEGORIES || ['Elétrica', 'Limpeza', 'Encanamento', 'Construção', 'Aulas'];
-    const nomes = ['João Silva', 'Maria Santos', 'Carlos Oliveira', 'Ana Costa', 'Pedro Souza', 'Fernanda Lima'];
-    
-    for (let i = 0; i < 8; i++) {
-        const categoria = categorias[i % categorias.length];
-        const nome = `${nomes[i % nomes.length]} - ${categoria}`;
-        
-        servicos.push({
-            id: `exemplo-${i + 1}`,
-            nome: nome,
-            categoria: categoria,
-            descricao: `Serviço profissional de ${categoria.toLowerCase()}. Experiência comprovada, trabalho de qualidade.`,
-            avaliacao: 3.5 + Math.random() * 1.5, // 3.5 a 5.0
-            distancia: Math.random() * 5 + 0.5, // 0.5 a 5.5 km
-            preco: 50 + Math.random() * 100, // R$50 a R$150
-            telefone: '+5511999999999',
-            whatsapp: '+5511999999999',
-            email: `contato${i + 1}@servico.com`,
-            uid: `exemplo-${i + 1}`
-        });
-    }
-    
     servicosFiltrados = [...servicos];
-    console.log(`✅ ${servicos.length} serviços de exemplo criados`);
-    showToast(`${servicos.length} serviços de exemplo carregados`, 'info');
+    
+    const servicesList = document.getElementById('services-list');
+    if (servicesList) {
+        servicesList.innerHTML = `
+            <div class="empty-state">
+                <span class="material-icons empty-state-icon">business_center</span>
+                <p class="empty-state-text">Nenhum serviço disponível</p>
+                <p style="color: var(--text-light); font-size: 14px; margin-top: 8px;">
+                    Cadastre-se como prestador para oferecer serviços
+                </p>
+                <button class="nav-button" style="margin-top: 16px;" onclick="window.location.href='register.html'">
+                    <span class="material-icons">person_add</span>
+                    Cadastrar-se como Prestador
+                </button>
+            </div>
+        `;
+    }
 }
 
 // Inicialização
@@ -269,10 +260,12 @@ async function init() {
     
     // Carregar serviços
     console.log('📥 Tentando carregar serviços...');
-    await carregarServicosFirestore();
+    const servicosCarregados = await carregarServicosFirestore();
     
-    // Renderizar serviços
-    renderServicos(elements.servicesList);
+    // Renderizar serviços (só se houver serviços)
+    if (servicosCarregados && servicosFiltrados.length > 0) {
+        renderServicos(elements.servicesList);
+    }
     
     // Configurar event listeners
     setupEventListeners(elements);
@@ -333,19 +326,7 @@ function renderServicos(servicesListElement) {
     servicesListElement.innerHTML = '';
     
     if (servicosFiltrados.length === 0) {
-        servicesListElement.innerHTML = `
-            <div class="empty-state">
-                <span class="material-icons empty-state-icon">search_off</span>
-                <p class="empty-state-text">Nenhum serviço encontrado</p>
-                <p style="color: var(--text-light); font-size: 14px; margin-top: 8px;">
-                    Tente buscar por outra categoria ou palavra-chave
-                </p>
-                <button class="nav-button" style="margin-top: 16px;" onclick="location.reload()">
-                    <span class="material-icons">refresh</span>
-                    Recarregar
-                </button>
-            </div>
-        `;
+        mostrarEstadoVazio();
         return;
     }
     
