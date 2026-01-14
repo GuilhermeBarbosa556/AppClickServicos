@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Serviços - Login</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <!-- Navegação Header -->
+    <div class="nav-header">
+        <a href="index.html" class="nav-logo">
+            <span class="material-icons">handyman</span>
+            Click Serviços
+        </a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Início</a>
+            <a href="register.html" class="nav-button">Cadastrar</a>
+        </div>
+    </div>
+
+    <!-- Container de Login -->
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <h1 class="login-title">Click Serviços</h1>
+                <p class="login-subtitle">Entre na sua conta para continuar</p>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email" class="form-label">E-mail</label>
+                    <input type="email" id="email" class="form-input" placeholder="seu@email.com" required>
+                    <div id="email-error" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Senha</label>
+                    <div class="password-input">
+                        <input type="password" id="password" class="form-input" placeholder="Digite sua senha" required>
+                        <button type="button" class="toggle-password" id="toggle-password">
+                            <span class="material-icons" id="toggle-icon">visibility_off</span>
+                        </button>
+                    </div>
+                    <div id="password-error" class="error-message"></div>
+                </div>
+
+                <div class="forgot-password">
+                    <a href="#" id="forgot-password">Esqueceu sua senha?</a>
+                </div>
+
+                <button type="submit" class="login-button" id="login-submit">
+                    <span id="login-text">Entrar</span>
+                    <span id="login-loading" class="hidden">
+                        <span class="material-icons loading">refresh</span> Entrando...
+                    </span>
+                </button>
+
+                <div class="divider">
+                    <span>ou</span>
+                </div>
+
+                <div class="social-login">
+                    <button type="button" class="social-button google" id="google-login">
+                        <span class="material-icons">mail</span>
+                        <span>Continuar com Google</span>
+                    </button>
+                    <button type="button" class="social-button facebook" id="facebook-login">
+                        <span class="material-icons">facebook</span>
+                        <span>Continuar com Facebook</span>
+                    </button>
+                </div>
+
+                <div class="register-link">
+                    Não tem uma conta? <a href="register.html">Cadastre-se</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Click Serviços</h3>
+                <p>Conectando você aos melhores prestadores de serviço da região.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Links Rápidos</h3>
+                <ul class="footer-links">
+                    <li><a href="index.html">Início</a></li>
+                    <li><a href="login.html">Login</a></li>
+                    <li><a href="register.html">Cadastro</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contato</h3>
+                <ul class="footer-links">
+                    <li><a href="mailto:suporte@clickservicos.com">suporte@clickservicos.com</a></li>
+                    <li><a href="tel:+5511999999999">(11) 99999-9999</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Click Serviços. Todos os direitos reservados.</p>
+            <p style="font-size: 12px; margin-top: 8px;">Hospedado no GitHub Pages</p>
+        </div>
+    </footer>
+
+    <!-- Modal de Recuperação de Senha -->
+    <div id="forgot-password-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Recuperar Senha</h2>
+                <button class="modal-close" id="close-forgot-modal">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-content">
+                <p>Digite seu e-mail para receber as instruções de recuperação de senha:</p>
+                <div style="margin-top: 16px;">
+                    <input type="email" id="recovery-email" class="form-input" placeholder="seu@email.com">
+                    <div id="recovery-error" class="error-message"></div>
+                </div>
+            </div>
+            <div class="modal-content" style="display: flex; justify-content: flex-end; gap: 8px; padding-top: 0;">
+                <button class="contact-button" style="background-color: #6c757d;" id="cancel-recovery">Cancelar</button>
+                <button class="contact-button" style="background-color: var(--primary-color);" id="send-recovery">
+                    <span id="send-text">Enviar</span>
+                    <span id="send-loading" class="hidden">
+                        <span class="material-icons loading">refresh</span> Enviando...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="config.js"></script>
+    <script src="navigation.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar Firebase se necessário
+            if (typeof initializeFirebase !== 'undefined') {
+                setTimeout(() => {
+                    if (typeof initializeFirebase === 'function') {
+                        initializeFirebase();
+                    }
+                }, 100);
+            }
+            
+            // Elementos
+            const loginForm = document.getElementById('login-form');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const emailError = document.getElementById('email-error');
+            const passwordError = document.getElementById('password-error');
+            const togglePasswordBtn = document.getElementById('toggle-password');
+            const toggleIcon = document.getElementById('toggle-icon');
+            const forgotPasswordLink = document.getElementById('forgot-password');
+            const forgotPasswordModal = document.getElementById('forgot-password-modal');
+            const closeForgotModal = document.getElementById('close-forgot-modal');
+            const cancelRecovery = document.getElementById('cancel-recovery');
+            const sendRecovery = document.getElementById('send-recovery');
+            const recoveryEmail = document.getElementById('recovery-email');
+            const recoveryError = document.getElementById('recovery-error');
+            const loginSubmit = document.getElementById('login-submit');
+            const loginText = document.getElementById('login-text');
+            const loginLoading = document.getElementById('login-loading');
+            const sendText = document.getElementById('send-text');
+            const sendLoading = document.getElementById('send-loading');
+
+            // Função para mostrar loading
+            function showLoading(button, textElement, loadingElement) {
+                textElement.classList.add('hidden');
+                loadingElement.classList.remove('hidden');
+                button.disabled = true;
+            }
+
+            // Função para esconder loading
+            function hideLoading(button, textElement, loadingElement) {
+                textElement.classList.remove('hidden');
+                loadingElement.classList.add('hidden');
+                button.disabled = false;
+            }
+
+            // Alternar visibilidade da senha
+            togglePasswordBtn.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                toggleIcon.textContent = type === 'password' ? 'visibility_off' : 'visibility';
+            });
+
+            // Validação do formulário
+            function validateEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+
+            function validatePassword(password) {
+                return password.length >= 6;
+            }
+
+            // Submissão do formulário com Firebase
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                
+                // Limpar erros anteriores
+                emailError.textContent = '';
+                passwordError.textContent = '';
+                emailError.classList.remove('show');
+                passwordError.classList.remove('show');
+                
+                let isValid = true;
+                
+                // Validar e-mail
+                if (!validateEmail(email)) {
+                    emailError.textContent = 'Por favor, insira um e-mail válido';
+                    emailError.classList.add('show');
+                    isValid = false;
+                }
+                
+                // Validar senha
+                if (!validatePassword(password)) {
+                    passwordError.textContent = 'A senha deve ter pelo menos 6 caracteres';
+                    passwordError.classList.add('show');
+                    isValid = false;
+                }
+                
+                if (!isValid) return;
+                
+                // Verificar se Firebase está disponível
+                if (!isFirebaseAvailable()) {
+                    console.log('Firebase não disponível, usando fallback');
+                    
+                    // Tentar inicializar Firebase
+                    if (typeof initializeFirebase === 'function') {
+                        initializeFirebase();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                    
+                    if (!isFirebaseAvailable()) {
+                        showToast('Firebase não está disponível. Usando sistema local.', 'warning');
+                        // Fallback para localStorage
+                        localStorage.setItem('isLoggedIn', 'true');
+                        localStorage.setItem('userEmail', email);
+                        localStorage.setItem('userName', email.split('@')[0]);
+                        showToast('Login realizado com sucesso!', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
+                        return;
+                    }
+                }
+                
+                try {
+                    // Mostrar loading
+                    showLoading(loginSubmit, loginText, loginLoading);
+                    
+                    // Verificar novamente se Firebase está disponível
+                    if (!window.firebaseAuth || !window.firebaseAuth.signInWithEmailAndPassword) {
+                        throw new Error('Firebase Auth não inicializado');
+                    }
+                    
+                    // Tentar login com Firebase
+                    const userCredential = await window.firebaseAuth.signInWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    
+                    // Buscar dados adicionais do usuário no Firestore
+                    let userData = {
+                        nome: user.displayName || email.split('@')[0],
+                        email: user.email,
+                        uid: user.uid
+                    };
+                    
+                    try {
+                        if (window.firebaseDb && window.firebaseDb.collection) {
+                            const userDoc = await window.firebaseDb.collection('users').doc(user.uid).get();
+                            if (userDoc.exists) {
+                                const data = userDoc.data();
+                                userData = { ...userData, ...data };
+                            }
+                        }
+                    } catch (error) {
+                        console.log('Usuário não encontrado no Firestore, usando dados básicos');
+                    }
+                    
+                    // Salvar dados no localStorage
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('userName', userData.nome);
+                    localStorage.setItem('userEmail', userData.email);
+                    localStorage.setItem('userUid', userData.uid);
+                    localStorage.setItem('userPhone', userData.telefone || '');
+                    localStorage.setItem('userLocation', userData.localizacao || window.CONFIG?.DEFAULT_LOCATION || 'São Paulo, SP');
+                    localStorage.setItem('userType', userData.tipo || 'client');
+                    
+                    // Atualizar navigation.js se existir
+                    if (typeof navigation !== 'undefined') {
+                        await navigation.updateUserData(userData);
+                    }
+                    
+                    // Sucesso
+                    showToast('Login realizado com sucesso!', 'success');
+                    
+                    // Redirecionar após breve delay
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                    
+                } catch (error) {
+                    // Restaurar botão
+                    hideLoading(loginSubmit, loginText, loginLoading);
+                    
+                    // Tratar erros
+                    let errorMessage = 'Erro ao fazer login. Tente novamente.';
+                    let errorField = null;
+                    
+                    if (error.code) {
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                                errorMessage = 'Usuário não encontrado. Verifique seu e-mail ou cadastre-se.';
+                                errorField = 'email';
+                                break;
+                            case 'auth/wrong-password':
+                                errorMessage = 'Senha incorreta. Tente novamente.';
+                                errorField = 'password';
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessage = 'E-mail inválido. Verifique o formato.';
+                                errorField = 'email';
+                                break;
+                            case 'auth/user-disabled':
+                                errorMessage = 'Esta conta foi desativada. Contate o suporte.';
+                                break;
+                            case 'auth/too-many-requests':
+                                errorMessage = 'Muitas tentativas. Tente novamente mais tarde.';
+                                break;
+                            case 'auth/network-request-failed':
+                                errorMessage = 'Erro de conexão. Verifique sua internet.';
+                                break;
+                            default:
+                                errorMessage = error.message;
+                        }
+                    } else {
+                        errorMessage = error.message || 'Erro desconhecido ao fazer login';
+                    }
+                    
+                    // Mostrar erro no campo específico
+                    if (errorField === 'email') {
+                        emailError.textContent = errorMessage;
+                        emailError.classList.add('show');
+                    } else if (errorField === 'password') {
+                        passwordError.textContent = errorMessage;
+                        passwordError.classList.add('show');
+                    }
+                    
+                    showToast(errorMessage, 'error');
+                }
+            });
+
+            // Validação em tempo real
+            emailInput.addEventListener('input', function() {
+                if (validateEmail(this.value.trim())) {
+                    emailError.classList.remove('show');
+                }
+            });
+
+            passwordInput.addEventListener('input', function() {
+                if (validatePassword(this.value)) {
+                    passwordError.classList.remove('show');
+                }
+            });
+
+            // Login social (em desenvolvimento)
+            document.getElementById('google-login').addEventListener('click', function() {
+                showToast('Login com Google em desenvolvimento', 'info');
+            });
+
+            document.getElementById('facebook-login').addEventListener('click', function() {
+                showToast('Login com Facebook em desenvolvimento', 'info');
+            });
+
+            // Modal de recuperação de senha
+            forgotPasswordLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                forgotPasswordModal.classList.remove('hidden');
+            });
+
+            closeForgotModal.addEventListener('click', function() {
+                forgotPasswordModal.classList.add('hidden');
+                recoveryError.textContent = '';
+            });
+
+            cancelRecovery.addEventListener('click', function() {
+                forgotPasswordModal.classList.add('hidden');
+                recoveryError.textContent = '';
+            });
+
+            sendRecovery.addEventListener('click', async function() {
+                const email = recoveryEmail.value.trim();
+                
+                if (!validateEmail(email)) {
+                    recoveryError.textContent = 'Por favor, insira um e-mail válido';
+                    recoveryError.classList.add('show');
+                    return;
+                }
+                
+                try {
+                    showLoading(sendRecovery, sendText, sendLoading);
+                    
+                    // Verificar se Firebase está disponível
+                    if (!isFirebaseAvailable() || !window.firebaseAuth || !window.firebaseAuth.sendPasswordResetEmail) {
+                        throw new Error('Firebase não está disponível para recuperação de senha');
+                    }
+                    
+                    await window.firebaseAuth.sendPasswordResetEmail(email);
+                    
+                    showToast(`E-mail de recuperação enviado para: ${email}`, 'success');
+                    forgotPasswordModal.classList.add('hidden');
+                    recoveryEmail.value = '';
+                    recoveryError.textContent = '';
+                    
+                } catch (error) {
+                    hideLoading(sendRecovery, sendText, sendLoading);
+                    
+                    let errorMessage = 'Erro ao enviar e-mail de recuperação.';
+                    
+                    if (error.code) {
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                                errorMessage = 'Usuário não encontrado com este e-mail.';
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessage = 'E-mail inválido.';
+                                break;
+                            case 'auth/network-request-failed':
+                                errorMessage = 'Erro de conexão. Verifique sua internet.';
+                                break;
+                            default:
+                                errorMessage = error.message;
+                        }
+                    }
+                    
+                    recoveryError.textContent = errorMessage;
+                    recoveryError.classList.add('show');
+                }
+            });
+
+            // Fechar modal clicando fora
+            forgotPasswordModal.addEventListener('click', function(e) {
+                if (e.target === forgotPasswordModal) {
+                    forgotPasswordModal.classList.add('hidden');
+                    recoveryError.textContent = '';
+                }
+            });
+        });
+
+        // Função para mostrar toast
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                ${message}
+                <button class="toast-close">
+                    <span class="material-icons">close</span>
+                </button>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Animar entrada
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            }, 10);
+            
+            // Remover toast após 5 segundos
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 300);
+            }, 5000);
+            
+            // Fechar ao clicar no botão
+            toast.querySelector('.toast-close').addEventListener('click', () => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 300);
+            });
+        }
+    </script>
+    
+    <style>
+        .login-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        }
+
+        .login-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+            padding: 32px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: var(--text-light);
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: #eee;
+        }
+
+        .divider span {
+            padding: 0 16px;
+            font-size: 14px;
+        }
+
+        .social-login {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .social-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            background-color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .social-button:hover {
+            background-color: #f9f9f9;
+        }
+
+        .social-button.google {
+            color: #DB4437;
+        }
+
+        .social-button.facebook {
+            color: #4267B2;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--text-light);
+        }
+
+        .register-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: 8px;
+        }
+
+        .forgot-password a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .forgot-password a:hover {
+            text-decoration: underline;
+        }
+
+        .password-input {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .login-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .login-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</body>
+</html>
