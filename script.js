@@ -206,10 +206,6 @@ function mostrarEstadoVazio() {
                 <p style="color: var(--text-light); font-size: 14px; margin-top: 8px;">
                     Cadastre-se como prestador para oferecer serviços
                 </p>
-                <button class="nav-button" style="margin-top: 16px;" onclick="window.location.href='register.html'">
-                    <span class="material-icons">person_add</span>
-                    Cadastrar-se como Prestador
-                </button>
             </div>
         `;
     }
