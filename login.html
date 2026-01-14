@@ -145,17 +145,10 @@
     <script src="firebase-config.js"></script>
     <script src="config.js"></script>
     <script src="navigation.js"></script>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar Firebase se necessário
-            if (typeof initializeFirebase !== 'undefined') {
-                setTimeout(() => {
-                    if (typeof initializeFirebase === 'function') {
-                        initializeFirebase();
-                    }
-                }, 100);
-            }
+            console.log('🔧 Iniciando configuração de login...');
             
             // Elementos
             const loginForm = document.getElementById('login-form');
@@ -209,6 +202,87 @@
                 return password.length >= 6;
             }
 
+            // Função para verificar se Firebase está disponível
+            function checkFirebaseAvailability() {
+                console.log('🔍 Verificando disponibilidade do Firebase...');
+                
+                // Primeiro, tentar usar a função global se existir
+                if (typeof isFirebaseAvailable === 'function') {
+                    const available = isFirebaseAvailable();
+                    console.log('Firebase disponível (global):', available);
+                    return available;
+                }
+                
+                // Tentar verificar manualmente
+                if (typeof firebase !== 'undefined') {
+                    console.log('Firebase SDK carregado');
+                    
+                    // Tentar inicializar se não estiver inicializado
+                    if (!window.firebaseAuth && typeof initializeFirebase === 'function') {
+                        console.log('Tentando inicializar Firebase...');
+                        initializeFirebase();
+                        
+                        // Dar um tempo para inicializar
+                        setTimeout(() => {
+                            if (window.firebaseAuth) {
+                                console.log('Firebase inicializado com sucesso');
+                                return true;
+                            }
+                        }, 500);
+                    }
+                    
+                    return window.firebaseAuth !== null && window.firebaseAuth !== undefined;
+                }
+                
+                console.log('Firebase SDK não carregado');
+                return false;
+            }
+
+            // Função para inicializar Firebase se necessário
+            async function ensureFirebaseInitialized() {
+                console.log('🔄 Garantindo que Firebase está inicializado...');
+                
+                // Verificar se já está disponível
+                if (checkFirebaseAvailability()) {
+                    console.log('✅ Firebase já está inicializado');
+                    return true;
+                }
+                
+                // Tentar inicializar de diferentes formas
+                try {
+                    // 1. Usar função global
+                    if (typeof initializeFirebase === 'function') {
+                        console.log('Inicializando Firebase via função global...');
+                        initializeFirebase();
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                    
+                    // 2. Tentar inicializar diretamente
+                    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+                        console.log('Inicializando Firebase diretamente...');
+                        firebase.initializeApp(firebaseConfig);
+                        window.firebaseAuth = firebase.auth();
+                        window.firebaseDb = firebase.firestore();
+                    }
+                    
+                    // 3. Tentar sincronizar
+                    if (typeof tryInitializeFirebaseSync === 'function') {
+                        console.log('Tentando inicialização síncrona...');
+                        tryInitializeFirebaseSync();
+                    }
+                    
+                    // Verificar novamente
+                    const isAvailable = checkFirebaseAvailability();
+                    console.log('Firebase disponível após tentativas:', isAvailable);
+                    
+                    return isAvailable;
+                    
+                } catch (error) {
+                    console.error('Erro ao inicializar Firebase:', error);
+                    return false;
+                }
+            }
+
             // Submissão do formulário com Firebase
             loginForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -240,34 +314,29 @@
                 
                 if (!isValid) return;
                 
-                // Verificar se Firebase está disponível
-                if (!isFirebaseAvailable()) {
-                    console.log('Firebase não disponível, usando fallback');
-                    
-                    // Tentar inicializar Firebase
-                    if (typeof initializeFirebase === 'function') {
-                        initializeFirebase();
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
-                    
-                    if (!isFirebaseAvailable()) {
-                        showToast('Sistema de autenticação não disponível no momento. Tente novamente mais tarde.', 'error');
-                        return;
-                    }
-                }
-                
                 try {
                     // Mostrar loading
                     showLoading(loginSubmit, loginText, loginLoading);
                     
-                    // Verificar novamente se Firebase está disponível
-                    if (!window.firebaseAuth || !window.firebaseAuth.signInWithEmailAndPassword) {
-                        throw new Error('Firebase Auth não inicializado');
+                    // Garantir que Firebase está inicializado
+                    const firebaseReady = await ensureFirebaseInitialized();
+                    
+                    if (!firebaseReady) {
+                        throw new Error('Não foi possível inicializar o Firebase. Verifique sua conexão e tente novamente.');
                     }
+                    
+                    // Verificar se firebaseAuth está disponível
+                    if (!window.firebaseAuth || !window.firebaseAuth.signInWithEmailAndPassword) {
+                        throw new Error('Serviço de autenticação não disponível');
+                    }
+                    
+                    console.log('🔐 Tentando login com Firebase...');
                     
                     // Tentar login com Firebase
                     const userCredential = await window.firebaseAuth.signInWithEmailAndPassword(email, password);
                     const user = userCredential.user;
+                    
+                    console.log('✅ Login realizado com sucesso:', user.email);
                     
                     // Buscar dados adicionais do usuário no Firestore
                     let userData = {
@@ -325,6 +394,8 @@
                     let errorMessage = 'Erro ao fazer login. Tente novamente.';
                     let errorField = null;
                     
+                    console.error('Erro no login:', error);
+                    
                     if (error.code) {
                         switch (error.code) {
                             case 'auth/user-not-found':
@@ -349,7 +420,7 @@
                                 errorMessage = 'Erro de conexão. Verifique sua internet.';
                                 break;
                             default:
-                                errorMessage = error.message;
+                                errorMessage = error.message || 'Erro desconhecido ao fazer login';
                         }
                     } else {
                         errorMessage = error.message || 'Erro desconhecido ao fazer login';
@@ -418,8 +489,10 @@
                 try {
                     showLoading(sendRecovery, sendText, sendLoading);
                     
-                    // Verificar se Firebase está disponível
-                    if (!isFirebaseAvailable() || !window.firebaseAuth || !window.firebaseAuth.sendPasswordResetEmail) {
+                    // Garantir que Firebase está inicializado
+                    const firebaseReady = await ensureFirebaseInitialized();
+                    
+                    if (!firebaseReady || !window.firebaseAuth || !window.firebaseAuth.sendPasswordResetEmail) {
                         throw new Error('Firebase não está disponível para recuperação de senha');
                     }
                     
@@ -463,6 +536,17 @@
                     recoveryError.textContent = '';
                 }
             });
+
+            // Verificar Firebase imediatamente
+            setTimeout(() => {
+                console.log('🔍 Verificando Firebase no carregamento...');
+                ensureFirebaseInitialized().then(available => {
+                    console.log('Firebase disponível na inicialização:', available);
+                    if (!available) {
+                        console.warn('⚠️ Firebase não está disponível. O login pode não funcionar.');
+                    }
+                });
+            }, 500);
         });
 
         // Função para mostrar toast
@@ -509,6 +593,7 @@
     </script>
     
     <style>
+        /* Estilos mantidos */
         .login-container {
             flex: 1;
             display: flex;

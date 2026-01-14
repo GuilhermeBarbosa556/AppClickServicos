@@ -361,6 +361,8 @@
     <script src="navigation.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Iniciando configuração de cadastro...');
+            
             // Elementos
             const registerForm = document.getElementById('register-form');
             const stepContents = document.querySelectorAll('.step-content');
@@ -587,6 +589,79 @@
                 }
             }
 
+            // Função para verificar se Firebase está disponível
+            function checkFirebaseAvailability() {
+                console.log('🔍 Verificando disponibilidade do Firebase...');
+                
+                // Primeiro, tentar usar a função global se existir
+                if (typeof isFirebaseAvailable === 'function') {
+                    const available = isFirebaseAvailable();
+                    console.log('Firebase disponível (global):', available);
+                    return available;
+                }
+                
+                // Tentar verificar manualmente
+                if (typeof firebase !== 'undefined') {
+                    console.log('Firebase SDK carregado');
+                    
+                    // Tentar inicializar se não estiver inicializado
+                    if (!window.firebaseAuth && typeof initializeFirebase === 'function') {
+                        console.log('Tentando inicializar Firebase...');
+                        initializeFirebase();
+                    }
+                    
+                    return window.firebaseAuth !== null && window.firebaseAuth !== undefined;
+                }
+                
+                console.log('Firebase SDK não carregado');
+                return false;
+            }
+
+            // Função para inicializar Firebase se necessário
+            async function ensureFirebaseInitialized() {
+                console.log('🔄 Garantindo que Firebase está inicializado...');
+                
+                // Verificar se já está disponível
+                if (checkFirebaseAvailability()) {
+                    console.log('✅ Firebase já está inicializado');
+                    return true;
+                }
+                
+                // Tentar inicializar de diferentes formas
+                try {
+                    // 1. Usar função global
+                    if (typeof initializeFirebase === 'function') {
+                        console.log('Inicializando Firebase via função global...');
+                        initializeFirebase();
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                    
+                    // 2. Tentar inicializar diretamente
+                    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+                        console.log('Inicializando Firebase diretamente...');
+                        firebase.initializeApp(firebaseConfig);
+                        window.firebaseAuth = firebase.auth();
+                        window.firebaseDb = firebase.firestore();
+                    }
+                    
+                    // 3. Tentar sincronizar
+                    if (typeof tryInitializeFirebaseSync === 'function') {
+                        console.log('Tentando inicialização síncrona...');
+                        tryInitializeFirebaseSync();
+                    }
+                    
+                    // Verificar novamente
+                    const isAvailable = checkFirebaseAvailability();
+                    console.log('Firebase disponível após tentativas:', isAvailable);
+                    
+                    return isAvailable;
+                    
+                } catch (error) {
+                    console.error('Erro ao inicializar Firebase:', error);
+                    return false;
+                }
+            }
+
             // Event listeners
             nextToStep2.addEventListener('click', function() {
                 clearAllErrors();
@@ -750,24 +825,29 @@
                 
                 const password = document.getElementById('password').value;
                 
-                // Verificar se Firebase está disponível
-                if (!isFirebaseAvailable()) {
-                    showToast('Sistema de cadastro não disponível no momento. Tente novamente mais tarde.', 'error');
-                    return;
-                }
-                
                 try {
                     // Mostrar loading
                     showLoading(completeRegister);
                     
-                    // Verificar se Firebase Auth está disponível
-                    if (!window.firebaseAuth || !window.firebaseAuth.createUserWithEmailAndPassword) {
-                        throw new Error('Firebase Auth não inicializado');
+                    // Garantir que Firebase está inicializado
+                    const firebaseReady = await ensureFirebaseInitialized();
+                    
+                    if (!firebaseReady) {
+                        throw new Error('Não foi possível inicializar o Firebase. Verifique sua conexão e tente novamente.');
                     }
+                    
+                    // Verificar se firebaseAuth está disponível
+                    if (!window.firebaseAuth || !window.firebaseAuth.createUserWithEmailAndPassword) {
+                        throw new Error('Serviço de cadastro não disponível');
+                    }
+                    
+                    console.log('📝 Criando conta no Firebase...');
                     
                     // 1. Criar usuário no Firebase Authentication
                     const userCredential = await window.firebaseAuth.createUserWithEmailAndPassword(userData.email, password);
                     const user = userCredential.user;
+                    
+                    console.log('✅ Conta criada no Firebase:', user.email);
                     
                     // 2. Atualizar display name no Firebase Auth
                     await user.updateProfile({
@@ -781,6 +861,8 @@
                             uid: user.uid,
                             dataAtualizacao: new Date().toISOString()
                         });
+                        
+                        console.log('✅ Dados salvos no Firestore');
                         
                         // 4. Se for prestador, criar também na coleção de prestadores
                         if (userData.tipo === 'provider') {
@@ -798,6 +880,8 @@
                                 dataCadastro: new Date().toISOString(),
                                 dataAtualizacao: new Date().toISOString()
                             });
+                            
+                            console.log('✅ Prestador registrado na coleção de prestadores');
                         }
                     }
                     
@@ -838,6 +922,8 @@
                     // Tratar erros
                     let errorMessage = 'Erro ao criar conta. Tente novamente.';
                     let errorField = 'general';
+                    
+                    console.error('Erro no cadastro:', error);
                     
                     if (error.code) {
                         switch (error.code) {
@@ -881,9 +967,19 @@
                     }
                     
                     showToast(errorMessage, 'error');
-                    console.error('Erro no cadastro:', error);
                 }
             });
+
+            // Verificar Firebase imediatamente
+            setTimeout(() => {
+                console.log('🔍 Verificando Firebase no carregamento...');
+                ensureFirebaseInitialized().then(available => {
+                    console.log('Firebase disponível na inicialização:', available);
+                    if (!available) {
+                        console.warn('⚠️ Firebase não está disponível. O cadastro pode não funcionar.');
+                    }
+                });
+            }, 500);
         });
 
         // Função para mostrar toast
@@ -931,7 +1027,9 @@
             });
         }
     </script>
+    
     <style>
+        /* Estilos mantidos - mesma seção de CSS */
         .register-container {
             flex: 1;
             display: flex;

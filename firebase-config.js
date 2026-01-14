@@ -15,6 +15,7 @@ const firebaseConfig = {
 let auth = null;
 let db = null;
 let firebaseApp = null;
+let firebaseInitialized = false;
 
 // Inicializar Firebase
 function initializeFirebase() {
@@ -49,7 +50,11 @@ function initializeFirebase() {
                 console.error("❌ Erro na persistência:", error);
             });
             
+        firebaseInitialized = true;
         console.log('✅ Firebase Auth e Firestore inicializados');
+        
+        // Atualizar variáveis globais
+        updateGlobalVariables();
         
     } catch (error) {
         console.error("❌ Erro ao inicializar Firebase:", error);
@@ -57,7 +62,18 @@ function initializeFirebase() {
         auth = null;
         db = null;
         firebaseApp = null;
+        firebaseInitialized = false;
         console.log('⚠️ Usando fallback para localStorage');
+    }
+}
+
+// Atualizar variáveis globais
+function updateGlobalVariables() {
+    if (typeof window !== 'undefined') {
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.firebaseApp = firebaseApp;
+        window.firebaseInitialized = firebaseInitialized;
     }
 }
 
@@ -76,16 +92,42 @@ function isFirebaseAvailable() {
     return typeof firebase !== 'undefined' && 
            auth !== null && 
            db !== null &&
-           firebaseApp !== null;
+           firebaseApp !== null &&
+           firebaseInitialized;
+}
+
+// Tentar inicializar Firebase de forma síncrona
+function tryInitializeFirebaseSync() {
+    if (typeof firebase !== 'undefined' && !firebaseInitialized) {
+        try {
+            if (!firebase.apps.length) {
+                firebaseApp = firebase.initializeApp(firebaseConfig);
+            } else {
+                firebaseApp = firebase.app();
+            }
+            auth = firebase.auth();
+            db = firebase.firestore();
+            firebaseInitialized = true;
+            updateGlobalVariables();
+            return true;
+        } catch (error) {
+            console.error('Erro ao inicializar Firebase sync:', error);
+            return false;
+        }
+    }
+    return firebaseInitialized;
 }
 
 // Exportar para uso global
 if (typeof window !== 'undefined') {
-    window.firebaseAuth = auth;
-    window.firebaseDb = db;
-    window.firebaseApp = firebaseApp;
-    window.isFirebaseAvailable = isFirebaseAvailable;
+    // Inicializar variáveis globais
+    updateGlobalVariables();
+    
+    // Exportar funções
     window.initializeFirebase = initializeFirebase;
+    window.isFirebaseAvailable = isFirebaseAvailable;
+    window.tryInitializeFirebaseSync = tryInitializeFirebaseSync;
+    window.waitForFirebase = waitForFirebase;
 }
 
 // Função de debug
@@ -95,6 +137,7 @@ function checkFirebaseStatus() {
     console.log("Auth disponível:", auth !== null);
     console.log("Firestore disponível:", db !== null);
     console.log("App disponível:", firebaseApp !== null);
+    console.log("Firebase inicializado:", firebaseInitialized);
     console.log("Configuração carregada:", firebaseConfig ? "✅" : "❌");
     console.groupEnd();
 }
@@ -111,6 +154,13 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(checkFirebaseStatus, 2000);
     }, 100);
 });
+
+// Tentar inicializar imediatamente se possível
+if (typeof firebase !== 'undefined') {
+    setTimeout(() => {
+        tryInitializeFirebaseSync();
+    }, 100);
+}
 
 // Log inicial
 console.log('📁 Firebase Config carregado');
