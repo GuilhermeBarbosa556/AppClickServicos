@@ -5,6 +5,7 @@ class AvaliacoesViewer {
         this.prestadorId = null;
         this.prestadorNome = '';
         this.avaliacoes = [];
+        this.loading = true;
     }
 
     async init() {
@@ -17,21 +18,88 @@ class AvaliacoesViewer {
             return;
         }
 
-        await this.loadPrestadorInfo();
-        await this.loadAvaliacoes();
-        this.renderStats();
-        this.renderAvaliacoes();
+        // Mostrar estado de carregamento
+        this.showLoading();
+
+        // Atualizar status do carregamento
+        this.updateLoadingStatus('Inicializando sistema...');
+
+        try {
+            await this.loadPrestadorInfo();
+            this.updateLoadingStatus('Carregando avaliações...');
+            await this.loadAvaliacoes();
+            
+            // Pequeno delay para melhor experiência do usuário
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            this.hideLoading();
+            this.renderStats();
+            this.renderAvaliacoes();
+            
+            // Mostrar conteúdo carregado
+            this.showContent();
+        } catch (error) {
+            console.error('Erro na inicialização:', error);
+            this.hideLoading();
+            this.showError('Erro ao carregar avaliações. Tente novamente.');
+        }
+    }
+
+    // Funções de carregamento
+    showLoading() {
+        this.loading = true;
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const skeletonContent = document.getElementById('skeleton-content');
+        
+        if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+        if (skeletonContent) skeletonContent.style.display = 'block';
+        
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) mainContent.classList.add('content-loading');
+    }
+
+    hideLoading() {
+        this.loading = false;
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const skeletonContent = document.getElementById('skeleton-content');
+        
+        // Animar fade out do overlay
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+            }, 300);
+        }
+        
+        if (skeletonContent) skeletonContent.style.display = 'none';
+    }
+
+    updateLoadingStatus(message) {
+        const loadingSubtext = document.getElementById('loading-subtext');
+        if (loadingSubtext) {
+            loadingSubtext.textContent = message;
+        }
+    }
+
+    showContent() {
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.classList.remove('content-loading');
+            mainContent.classList.add('content-loaded');
+        }
     }
 
     // ADICIONAR: Função para verificar Firebase
     checkFirebaseReady() {
         if (typeof firebase === 'undefined') {
             console.error('Firebase SDK não carregado');
+            this.updateLoadingStatus('Aguardando Firebase...');
             return false;
         }
         
         if (!window.firebaseDb) {
             console.log('Firestore não disponível, tentando inicializar...');
+            this.updateLoadingStatus('Inicializando banco de dados...');
             
             // Tentar inicializar se não estiver
             if (typeof initializeFirebase === 'function') {
@@ -53,6 +121,7 @@ class AvaliacoesViewer {
                     window.firebaseDb = firebase.firestore();
                     window.firebaseAuth = firebase.auth();
                     console.log('Firebase inicializado manualmente');
+                    this.updateLoadingStatus('Banco de dados conectado!');
                 } catch (error) {
                     console.error('Erro ao inicializar Firebase:', error);
                     return false;
@@ -62,6 +131,7 @@ class AvaliacoesViewer {
             return window.firebaseDb !== null && window.firebaseDb !== undefined;
         }
         
+        this.updateLoadingStatus('Banco de dados pronto!');
         return true;
     }
 
@@ -73,12 +143,14 @@ class AvaliacoesViewer {
                 document.title = `Avaliações - ${this.prestadorNome}`;
                 
                 // Atualizar título da página
-                const titleElement = document.querySelector('h1');
+                const titleElement = document.getElementById('page-title');
                 if (titleElement) {
                     titleElement.textContent = `Avaliações - ${this.prestadorNome}`;
                 }
                 return;
             }
+
+            this.updateLoadingStatus('Buscando informações do prestador...');
 
             const prestadorDoc = await window.firebaseDb.collection('prestadores')
                 .doc(this.prestadorId)
@@ -90,17 +162,24 @@ class AvaliacoesViewer {
                 document.title = `Avaliações - ${this.prestadorNome}`;
                 
                 // Atualizar título da página
-                const titleElement = document.querySelector('h1');
+                const titleElement = document.getElementById('page-title');
                 if (titleElement) {
                     titleElement.textContent = `Avaliações - ${this.prestadorNome}`;
                 }
+                
+                this.updateLoadingStatus(`Carregando avaliações de ${this.prestadorNome}...`);
             } else {
                 this.prestadorNome = 'Prestador';
                 document.title = `Avaliações - ${this.prestadorNome}`;
+                const titleElement = document.getElementById('page-title');
+                if (titleElement) {
+                    titleElement.textContent = `Avaliações`;
+                }
             }
         } catch (error) {
             console.error('Erro ao carregar informações do prestador:', error);
             this.prestadorNome = 'Prestador de Serviços';
+            this.updateLoadingStatus('Usando informações básicas...');
         }
     }
 
@@ -116,6 +195,7 @@ class AvaliacoesViewer {
             }
 
             console.log(`Buscando avaliações para o prestador: ${this.prestadorId}`);
+            this.updateLoadingStatus('Consultando banco de dados...');
             
             const querySnapshot = await window.firebaseDb.collection('avaliacoes')
                 .where('prestadorId', '==', this.prestadorId)
@@ -124,6 +204,8 @@ class AvaliacoesViewer {
                 .get();
 
             this.avaliacoes = [];
+            this.updateLoadingStatus(`Processando ${querySnapshot.size} avaliações...`);
+            
             querySnapshot.forEach(doc => {
                 const data = doc.data();
                 // ADICIONAR: Garantir que os dados estejam completos
@@ -148,6 +230,7 @@ class AvaliacoesViewer {
             });
 
             console.log(`✅ ${this.avaliacoes.length} avaliações carregadas para o prestador ${this.prestadorId}`);
+            this.updateLoadingStatus(`${this.avaliacoes.length} avaliações encontradas!`);
 
         } catch (error) {
             console.error('Erro ao carregar avaliações:', error);
@@ -162,13 +245,15 @@ class AvaliacoesViewer {
                 errorMessage += ': ' + error.message;
             }
             
-            showToast(errorMessage, 'error');
+            this.updateLoadingStatus('Erro ao carregar. Tentando novamente...');
             
             // ADICIONAR: Usar dados de exemplo em caso de erro
             if (this.avaliacoes.length === 0) {
                 console.log('Usando avaliações de exemplo');
                 this.avaliacoes = this.getSampleAvaliacoes();
             }
+            
+            throw error;
         }
     }
     
@@ -311,7 +396,7 @@ class AvaliacoesViewer {
         }
 
         container.innerHTML = this.avaliacoes.map(avaliacao => `
-            <div class="info-card avaliacao-item">
+            <div class="info-card avaliacao-item" style="animation: fadeIn 0.5s ease;">
                 <div class="avaliacao-header">
                     <div class="avaliacao-cliente">${avaliacao.clienteNome || 'Cliente'}</div>
                     <div class="avaliacao-data">${avaliacao.date || 'Data não disponível'}</div>
@@ -329,13 +414,14 @@ class AvaliacoesViewer {
     }
 
     showError(message) {
+        this.hideLoading();
         const container = document.getElementById('avaliacoes-list');
         if (container) {
             container.innerHTML = `
                 <div class="error-state">
                     <span class="material-icons">error</span>
-                    <p>${message}</p>
-                    <a href="index.html" class="nav-button">
+                    <p class="error-message">${message}</p>
+                    <a href="index.html" class="nav-button" style="margin-top: 16px;">
                         <span class="material-icons">home</span>
                         Voltar para Início
                     </a>
@@ -392,6 +478,33 @@ if (typeof window !== 'undefined' && !window.showToast) {
 
 // Inicializar quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', async () => {
-    const viewer = new AvaliacoesViewer();
-    await viewer.init();
+    console.log('📄 DOM carregado, iniciando sistema de avaliações...');
+    
+    // Pequeno delay para melhor experiência visual
+    setTimeout(async () => {
+        try {
+            const viewer = new AvaliacoesViewer();
+            await viewer.init();
+        } catch (error) {
+            console.error('❌ Erro fatal na inicialização:', error);
+            
+            // Mostrar erro ao usuário
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.innerHTML = `
+                    <div class="error-state" style="text-align: center;">
+                        <span class="material-icons" style="font-size: 64px; color: #f44336;">error</span>
+                        <p class="error-message" style="margin: 16px 0;">Erro ao carregar página</p>
+                        <p style="color: var(--text-light); font-size: 14px; margin-bottom: 24px;">
+                            ${error.message || 'Tente recarregar a página'}
+                        </p>
+                        <button class="nav-button" onclick="location.reload()">
+                            <span class="material-icons">refresh</span>
+                            Recarregar Página
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    }, 100);
 });

@@ -10,8 +10,129 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Estilos para animação de carregamento -->
+    <style>
+        /* Estilos específicos para a página de avaliações */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: var(--text-light);
+            margin-top: 8px;
+            text-align: center;
+            max-width: 80%;
+        }
+
+        .pulse-animation {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        .content-loading {
+            display: none;
+        }
+
+        .content-loaded {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilos para skeleton loading */
+        .skeleton-loading {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        .skeleton-card {
+            height: 120px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+        }
+
+        .skeleton-title {
+            height: 24px;
+            width: 60%;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-text {
+            height: 16px;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-text-short {
+            height: 16px;
+            width: 40%;
+        }
+
+        @keyframes loading {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
 </head>
 <body>
+    <!-- Overlay de carregamento -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text pulse-animation">Carregando avaliações...</div>
+        <div class="loading-subtext" id="loading-subtext">Conectando ao banco de dados</div>
+    </div>
+
     <div class="nav-header">
         <button class="icon-button" onclick="history.back()">
             <span class="material-icons">arrow_back</span>
@@ -24,14 +145,24 @@
     </div>
 
     <div class="container">
-        <h1>Avaliações</h1>
+        <h1 id="page-title">Avaliações</h1>
         
-        <div id="rating-stats">
-            <!-- Estatísticas serão carregadas aqui -->
+        <!-- Conteúdo carregado dinamicamente -->
+        <div id="main-content" class="content-loading">
+            <div id="rating-stats">
+                <!-- Estatísticas serão carregadas aqui -->
+            </div>
+            
+            <div id="avaliacoes-list" class="avaliacoes-list">
+                <!-- Lista de avaliações será carregada aqui -->
+            </div>
         </div>
-        
-        <div id="avaliacoes-list" class="avaliacoes-list">
-            <!-- Lista de avaliações será carregada aqui -->
+
+        <!-- Skeleton loading enquanto carrega -->
+        <div id="skeleton-content">
+            <div class="info-card skeleton-loading skeleton-card"></div>
+            <div class="info-card skeleton-loading skeleton-card"></div>
+            <div class="info-card skeleton-loading skeleton-card"></div>
         </div>
     </div>
 
