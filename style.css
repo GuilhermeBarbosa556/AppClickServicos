@@ -303,8 +303,19 @@ body {
     color: #f44336;
 }
 
-.price {
-    color: #4caf50;
+/* Estilo para o detalhe de contato */
+.service-detail.contact {
+    color: var(--primary-color);
+}
+
+.service-detail.contact .material-icons {
+    font-size: 16px;
+    color: var(--primary-color);
+}
+
+/* Remove a cor verde do preço já que não será mais usado */
+.service-detail.price {
+    display: none;
 }
 
 .empty-state {

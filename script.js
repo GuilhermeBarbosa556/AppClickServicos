@@ -1,6 +1,3 @@
-// script.js - Lógica principal da aplicação com Firebase
-// Compatível com GitHub Pages
-
 // Função para verificar se Firebase está disponível
 function isFirebaseAvailable() {
     return typeof firebase !== 'undefined' && 
@@ -163,7 +160,6 @@ async function carregarServicosFirestore() {
                     descricao: data.descricao || 'Serviço profissional de qualidade',
                     avaliacao: data.avaliacaoMedia || (3.5 + Math.random() * 1.5), // 3.5 a 5.0
                     distancia: data.distancia || (Math.random() * 5 + 0.5), // 0.5 a 5.5 km
-                    preco: data.precoMedio || (50 + Math.random() * 100), // R$50 a R$150
                     telefone: data.telefone || '+5511999999999',
                     whatsapp: data.whatsapp || data.telefone || '+5511999999999',
                     email: data.email || 'contato@servico.com',
@@ -336,6 +332,7 @@ function renderServicos(servicesListElement) {
                 </div>
                 <div class="service-info">
                     <h3 class="service-name">${servico.nome}</h3>
+                    <p class="service-category" style="color: var(--primary-color); font-size: 14px; margin-bottom: 4px;">${servico.categoria}</p>
                     <p class="service-description">${servico.descricao}</p>
                     <div class="service-details">
                         <div class="service-detail rating">
@@ -346,9 +343,9 @@ function renderServicos(servicesListElement) {
                             <span class="material-icons">location_on</span>
                             <span>${servico.distancia.toFixed(1)} km</span>
                         </div>
-                        <div class="service-detail price">
-                            <span class="material-icons">attach_money</span>
-                            <span>R$${servico.preco.toFixed(2)}</span>
+                        <div class="service-detail contact">
+                            <span class="material-icons">phone</span>
+                            <span>Contato</span>
                         </div>
                     </div>
                 </div>
@@ -392,7 +389,6 @@ function filtrarServicos(servicesListElement, sortBy = '') {
         switch (sortBy) {
             case 'rating': sortText = 'Melhor Avaliação'; break;
             case 'distance': sortText = 'Mais Próximo'; break;
-            case 'price': sortText = 'Menor Preço'; break;
         }
         showToast(`Ordenado por: ${sortText}`, 'info');
     }
@@ -404,8 +400,6 @@ function aplicarOrdenacao() {
         servicosFiltrados.sort((a, b) => b.avaliacao - a.avaliacao);
     } else if (ordenacaoAtual === 'distance') {
         servicosFiltrados.sort((a, b) => a.distancia - b.distancia);
-    } else if (ordenacaoAtual === 'price') {
-        servicosFiltrados.sort((a, b) => a.preco - b.preco);
     }
 }
 
@@ -434,7 +428,16 @@ function abrirPerfilPrestador(servico) {
     if (providerRating) providerRating.textContent = servico.avaliacao.toFixed(1);
     if (providerDistance) providerDistance.textContent = `${servico.distancia.toFixed(1)} km`;
     if (providerDescription) providerDescription.textContent = servico.descricao;
-    if (providerPrice) providerPrice.textContent = `R$${servico.preco.toFixed(2)}`;
+    
+    // MUDANÇA: Mostrar "Contato" no lugar do preço
+    if (providerPrice) {
+        providerPrice.textContent = 'Contato';
+        // Atualizar o label também
+        const priceLabel = providerPrice.parentElement.querySelector('.stat-label');
+        if (priceLabel) {
+            priceLabel.textContent = 'Contato';
+        }
+    }
     
     mainScreen.classList.add('hidden');
     providerProfileScreen.classList.remove('hidden');

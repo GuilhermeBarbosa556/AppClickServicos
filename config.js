@@ -20,15 +20,6 @@ const CONFIG = {
         'Tecnologia'
     ],
     
-    // Preços médios por categoria
-    PRICE_RANGES: {
-        'Elétrica': { min: 50, max: 200 },
-        'Limpeza': { min: 40, max: 150 },
-        'Encanamento': { min: 60, max: 250 },
-        'Construção': { min: 80, max: 500 },
-        'Aulas': { min: 30, max: 100 }
-    },
-    
     // Configurações Firebase
     USE_FIREBASE: true,
     FIREBASE_CONFIG: {
