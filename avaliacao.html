@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliar Serviço - Click Serviços</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="nav-header">
+        <button class="icon-button" onclick="history.back()">
+            <span class="material-icons">arrow_back</span>
+        </button>
+        <a href="index.html" class="nav-logo">
+            <span class="material-icons">handyman</span>
+            Click Serviços
+        </a>
+        <div style="width: 48px;"></div>
+    </div>
+
+    <div class="container">
+        <div id="rating-content">
+            <!-- Conteúdo será carregado dinamicamente -->
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="config.js"></script>
+    <script src="navigation.js"></script>
+    <script src="avaliacao.js"></script>
+</body>
+</html>

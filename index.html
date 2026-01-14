@@ -56,68 +56,95 @@
         </div>
     </div>
 
-    <!-- Provider Profile Screen -->
-    <div id="provider-profile-screen" class="hidden">
-        <div class="container">
-            <button class="icon-button" id="back-from-provider">
-                <span class="material-icons">arrow_back</span>
-            </button>
-            
-            <div class="profile-header">
-                <div class="profile-avatar">
-                    <span class="material-icons">person</span>
-                </div>
-                <h2 class="profile-name" id="provider-name">Nome do Prestador</h2>
-                <div class="profile-category" id="provider-category">Categoria</div>
+<!-- Provider Profile Screen -->
+<div id="provider-profile-screen" class="hidden">
+    <div class="container">
+        <button class="icon-button" id="back-from-provider">
+            <span class="material-icons">arrow_back</span>
+        </button>
+        
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <span class="material-icons">person</span>
             </div>
-            
-            <div class="info-card">
-                <div class="info-card-content">
-                    <div class="stats-container">
-                        <div class="stat-item">
-                            <div class="stat-value" id="provider-rating">4.5</div>
-                            <div class="stat-label">Avaliação</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="provider-distance">2.5 km</div>
-                            <div class="stat-label">Distância</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="provider-price">Contato</div>
-                            <div class="stat-label">Contato</div>
-                        </div>
+            <h2 class="profile-name" id="provider-name">Nome do Prestador</h2>
+            <div class="profile-category" id="provider-category">Categoria</div>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-card-content">
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-value" id="provider-rating">4.5</div>
+                        <div class="stat-label">Avaliação</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="provider-distance">2.5 km</div>
+                        <div class="stat-label">Distância</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="provider-price">Contato</div>
+                        <div class="stat-label">Contato</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="info-card">
-                <div class="info-card-header">Sobre</div>
-                <div class="info-card-content">
-                    <p id="provider-description">Descrição do serviço...</p>
-                </div>
-            </div>
-            
-            <div class="info-card">
-                <div class="info-card-header">Contato</div>
-                <div class="info-card-content">
-                    <div class="contact-buttons">
-                        <button class="contact-button phone-button" id="phone-button">
-                            <span class="material-icons">call</span>
-                            Ligar
-                        </button>
-                        <button class="contact-button whatsapp-button" id="whatsapp-button">
-                            <span class="material-icons">chat</span>
-                            WhatsApp
-                        </button>
+        </div>
+        
+        <!-- NOVA SEÇÃO: Avaliações -->
+        <div class="info-card">
+            <div class="info-card-header">Avaliações</div>
+            <div class="info-card-content">
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-value" id="provider-rating-avg">0.0</div>
+                        <div class="stat-label">Média</div>
                     </div>
-                    <button class="contact-button email-button" id="email-button">
-                        <span class="material-icons">email</span>
-                        E-mail
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-ratings">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                </div>
+                <div class="contact-buttons" style="margin-top: 16px;">
+                    <button class="contact-button rating-button" id="rate-button">
+                        <span class="material-icons">star</span>
+                        Avaliar
+                    </button>
+                    <button class="contact-button" id="view-ratings" style="background-color: var(--primary-color);">
+                        <span class="material-icons">reviews</span>
+                        Ver Avaliações
                     </button>
                 </div>
             </div>
         </div>
+        
+        <div class="info-card">
+            <div class="info-card-header">Sobre</div>
+            <div class="info-card-content">
+                <p id="provider-description">Descrição do serviço...</p>
+            </div>
+        </div>
+        
+        <div class="info-card">
+            <div class="info-card-header">Contato</div>
+            <div class="info-card-content">
+                <div class="contact-buttons">
+                    <button class="contact-button phone-button" id="phone-button">
+                        <span class="material-icons">call</span>
+                        Ligar
+                    </button>
+                    <button class="contact-button whatsapp-button" id="whatsapp-button">
+                        <span class="material-icons">chat</span>
+                        WhatsApp
+                    </button>
+                </div>
+                <button class="contact-button email-button" id="email-button">
+                    <span class="material-icons">email</span>
+                    E-mail
+                </button>
+            </div>
+        </div>
     </div>
+</div>
 
     <!-- User Profile Screen -->
     <div id="user-profile-screen" class="hidden">

@@ -61,6 +61,18 @@ function enviarEmail(email, assunto = 'Solicitação de Serviço', corpo = 'Olá
     window.location.href = `mailto:${email}?subject=${assuntoCodificado}&body=${corpoCodificado}`;
 }
 
+// Função para avaliar prestador
+function avaliarPrestador(servico) {
+    // Redirecionar para página de avaliação
+    const url = `avaliacao.html?prestadorId=${servico.id}&prestadorNome=${encodeURIComponent(servico.nome)}`;
+    window.location.href = url;
+}
+
+// Função para ver avaliações
+function verAvaliacoes(providerId) {
+    window.location.href = `avaliacoes.html?prestadorId=${providerId}`;
+}
+
 // Função para mostrar toast
 function showToast(message, type = 'info') {
     // Remover toasts antigos
@@ -151,21 +163,43 @@ async function carregarServicosFirestore() {
             // Limpar array existente
             servicos.length = 0;
             
-            querySnapshot.forEach((doc) => {
+            for (const doc of querySnapshot.docs) {
                 const data = doc.data();
+                
+                // Calcular avaliação média
+                let avaliacaoMedia = data.avaliacaoMedia || (3.5 + Math.random() * 1.5);
+                
+                // Se tiver avaliações no Firestore, usar valor real
+                try {
+                    const ratingsSnapshot = await window.firebaseDb.collection('avaliacoes')
+                        .where('prestadorId', '==', doc.id)
+                        .get();
+                    
+                    if (!ratingsSnapshot.empty) {
+                        let totalRating = 0;
+                        ratingsSnapshot.forEach(ratingDoc => {
+                            totalRating += ratingDoc.data().rating;
+                        });
+                        avaliacaoMedia = totalRating / ratingsSnapshot.size;
+                    }
+                } catch (error) {
+                    console.log('Usando avaliação padrão para prestador', doc.id);
+                }
+                
                 servicos.push({
                     id: doc.id,
                     nome: data.nome || 'Prestador',
                     categoria: data.categoria || 'Serviço',
                     descricao: data.descricao || 'Serviço profissional de qualidade',
-                    avaliacao: data.avaliacaoMedia || (3.5 + Math.random() * 1.5), // 3.5 a 5.0
+                    avaliacao: avaliacaoMedia,
                     distancia: data.distancia || (Math.random() * 5 + 0.5), // 0.5 a 5.5 km
                     telefone: data.telefone || '+5511999999999',
                     whatsapp: data.whatsapp || data.telefone || '+5511999999999',
                     email: data.email || 'contato@servico.com',
+                    totalAvaliacoes: data.totalAvaliacoes || 0,
                     uid: doc.id
                 });
-            });
+            }
             
             servicosFiltrados = [...servicos];
             console.log(`✅ ${servicos.length} serviços carregados do Firestore`);
@@ -338,6 +372,7 @@ function renderServicos(servicesListElement) {
                         <div class="service-detail rating">
                             <span class="material-icons">star</span>
                             <span>${servico.avaliacao.toFixed(1)}</span>
+                            ${servico.totalAvaliacoes > 0 ? `<span style="font-size: 12px; color: var(--text-light);">(${servico.totalAvaliacoes})</span>` : ''}
                         </div>
                         <div class="service-detail distance">
                             <span class="material-icons">location_on</span>
@@ -403,8 +438,6 @@ function aplicarOrdenacao() {
     }
 }
 
-// Encontre a função abrirPerfilPrestador no script.js e substitua por esta versão:
-
 // Abrir perfil do prestador
 function abrirPerfilPrestador(servico) {
     // Verificar se estamos no contexto correto (index.html)
@@ -420,15 +453,19 @@ function abrirPerfilPrestador(servico) {
     const providerName = document.getElementById('provider-name');
     const providerCategory = document.getElementById('provider-category');
     const providerRating = document.getElementById('provider-rating');
+    const providerRatingAvg = document.getElementById('provider-rating-avg'); // Novo elemento
     const providerDistance = document.getElementById('provider-distance');
     const providerDescription = document.getElementById('provider-description');
     const providerPrice = document.getElementById('provider-price');
+    const totalRatingsElement = document.getElementById('total-ratings');
     
     if (providerName) providerName.textContent = servico.nome;
     if (providerCategory) providerCategory.textContent = servico.categoria;
     if (providerRating) providerRating.textContent = servico.avaliacao.toFixed(1);
+    if (providerRatingAvg) providerRatingAvg.textContent = servico.avaliacao.toFixed(1); // Adicionar aqui
     if (providerDistance) providerDistance.textContent = `${servico.distancia.toFixed(1)} km`;
     if (providerDescription) providerDescription.textContent = servico.descricao;
+    if (totalRatingsElement) totalRatingsElement.textContent = servico.totalAvaliacoes || 0;
     
     // Mostrar "Contato" no lugar do preço
     if (providerPrice) {
@@ -439,6 +476,9 @@ function abrirPerfilPrestador(servico) {
             priceLabel.textContent = 'Contato';
         }
     }
+    
+    // Carregar estatísticas de avaliações
+    carregarEstatisticasAvaliacoes(servico.id);
     
     // Usar a função mostrarTela se estiver disponível, caso contrário usar método direto
     if (typeof mostrarTela === 'function') {
@@ -451,6 +491,45 @@ function abrirPerfilPrestador(servico) {
         if (mainScreen) mainScreen.classList.add('hidden');
         if (userProfileScreen) userProfileScreen.classList.add('hidden');
         if (providerProfileScreen) providerProfileScreen.classList.remove('hidden');
+    }
+}
+
+// Carregar estatísticas de avaliações
+async function carregarEstatisticasAvaliacoes(prestadorId) {
+    try {
+        if (!isFirebaseAvailable()) return;
+
+        // Buscar avaliações do prestador
+        const querySnapshot = await window.firebaseDb.collection('avaliacoes')
+            .where('prestadorId', '==', prestadorId)
+            .get();
+
+        let count = querySnapshot.size;
+
+        // Atualizar interface
+        const totalRatingsElement = document.getElementById('total-ratings');
+        if (totalRatingsElement) {
+            totalRatingsElement.textContent = count;
+        }
+
+        // Configurar botão para ver avaliações
+        const viewRatingsButton = document.getElementById('view-ratings');
+        if (viewRatingsButton) {
+            viewRatingsButton.addEventListener('click', () => {
+                verAvaliacoes(prestadorId);
+            });
+        }
+        
+        // Configurar botão para avaliar
+        const rateButton = document.getElementById('rate-button');
+        if (rateButton) {
+            rateButton.addEventListener('click', () => {
+                avaliarPrestador(prestadorAtual);
+            });
+        }
+
+    } catch (error) {
+        console.error('Erro ao carregar estatísticas de avaliações:', error);
     }
 }
 
@@ -555,6 +634,8 @@ window.filtrarServicos = function(sortBy = '') {
         filtrarServicos(servicesList, sortBy);
     }
 };
+window.avaliarPrestador = avaliarPrestador;
+window.verAvaliacoes = verAvaliacoes;
 
 // Log de inicialização
 console.log('🔄 Script.js carregado');
