@@ -145,10 +145,19 @@
     </div>
 
     <div class="container">
-        <h1 id="page-title">Avaliações</h1>
+        <!-- Estado de carregamento inicial (igual ao avaliacao.html) -->
+        <div id="loading-content" class="loading-state">
+            <h1>Avaliações</h1>
+            <div class="loading-content">
+                <span class="material-icons loading">refresh</span>
+                <p id="loading-text">Carregando avaliações...</p>
+            </div>
+        </div>
         
-        <!-- Conteúdo carregado dinamicamente -->
+        <!-- Conteúdo principal (inicialmente escondido) -->
         <div id="main-content" class="content-loading">
+            <h1 id="page-title">Avaliações</h1>
+            
             <div id="rating-stats">
                 <!-- Estatísticas serão carregadas aqui -->
             </div>
@@ -156,13 +165,6 @@
             <div id="avaliacoes-list" class="avaliacoes-list">
                 <!-- Lista de avaliações será carregada aqui -->
             </div>
-        </div>
-
-        <!-- Skeleton loading enquanto carrega -->
-        <div id="skeleton-content">
-            <div class="info-card skeleton-loading skeleton-card"></div>
-            <div class="info-card skeleton-loading skeleton-card"></div>
-            <div class="info-card skeleton-loading skeleton-card"></div>
         </div>
     </div>
 

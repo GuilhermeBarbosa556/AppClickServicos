@@ -167,7 +167,7 @@ async function carregarServicosFirestore() {
                 const data = doc.data();
                 
                 // Calcular avaliação média
-                let avaliacaoMedia = data.avaliacaoMedia || (3.5 + Math.random() * 1.5);
+                let avaliacaoMedia = data.avaliacaoMedia;
                 
                 // Se tiver avaliações no Firestore, usar valor real
                 try {
@@ -203,7 +203,6 @@ async function carregarServicosFirestore() {
             
             servicosFiltrados = [...servicos];
             console.log(`✅ ${servicos.length} serviços carregados do Firestore`);
-            showToast(`${servicos.length} serviços encontrados!`, 'success');
             return true;
         } else {
             console.log('ℹ️ Nenhum prestador encontrado no Firestore');

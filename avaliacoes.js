@@ -18,9 +18,12 @@ class AvaliacoesViewer {
             return;
         }
 
-        // Mostrar estado de carregamento
-        this.showLoading();
-
+        // Mostrar estado de carregamento inicial (igual ao avaliacao.html)
+        this.showLoadingState();
+        
+        // Esconder overlay de carregamento se existir
+        this.hideLoadingOverlay();
+        
         // Atualizar status do carregamento
         this.updateLoadingStatus('Inicializando sistema...');
 
@@ -32,60 +35,87 @@ class AvaliacoesViewer {
             // Pequeno delay para melhor experiência do usuário
             await new Promise(resolve => setTimeout(resolve, 500));
             
-            this.hideLoading();
+            // Esconder loading e mostrar conteúdo
+            this.hideLoadingState();
+            this.showMainContent();
+            
+            // Renderizar conteúdo
             this.renderStats();
             this.renderAvaliacoes();
             
-            // Mostrar conteúdo carregado
-            this.showContent();
         } catch (error) {
             console.error('Erro na inicialização:', error);
-            this.hideLoading();
+            this.hideLoadingState();
             this.showError('Erro ao carregar avaliações. Tente novamente.');
         }
     }
 
-    // Funções de carregamento
-    showLoading() {
-        this.loading = true;
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const skeletonContent = document.getElementById('skeleton-content');
-        
-        if (loadingOverlay) loadingOverlay.classList.remove('hidden');
-        if (skeletonContent) skeletonContent.style.display = 'block';
-        
+    // Função para mostrar estado de carregamento inicial (igual ao avaliacao.html)
+    showLoadingState() {
+        const loadingContent = document.getElementById('loading-content');
         const mainContent = document.getElementById('main-content');
-        if (mainContent) mainContent.classList.add('content-loading');
-    }
-
-    hideLoading() {
-        this.loading = false;
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const skeletonContent = document.getElementById('skeleton-content');
         
-        // Animar fade out do overlay
-        if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
-            setTimeout(() => {
-                loadingOverlay.style.display = 'none';
-            }, 300);
+        if (loadingContent) {
+            loadingContent.style.display = 'block';
+            loadingContent.innerHTML = `
+                <div class="loading-state">
+                    <h1>Avaliações</h1>
+                    <div class="loading-content">
+                        <span class="material-icons loading">refresh</span>
+                        <p id="loading-text">Carregando avaliações...</p>
+                    </div>
+                </div>
+            `;
         }
         
-        if (skeletonContent) skeletonContent.style.display = 'none';
+        if (mainContent) {
+            mainContent.style.display = 'none';
+        }
+        
+        this.loading = true;
     }
 
+    // Função para esconder estado de carregamento
+    hideLoadingState() {
+        const loadingContent = document.getElementById('loading-content');
+        if (loadingContent) {
+            loadingContent.style.display = 'none';
+        }
+        this.loading = false;
+    }
+
+    // Função para mostrar conteúdo principal
+    showMainContent() {
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.style.display = 'block';
+            mainContent.classList.remove('content-loading');
+            mainContent.style.animation = 'fadeIn 0.5s ease';
+        }
+    }
+
+    // Função para atualizar texto de carregamento
     updateLoadingStatus(message) {
+        const loadingText = document.getElementById('loading-text');
+        if (loadingText) {
+            loadingText.textContent = message;
+        }
+        
+        // Também atualizar no overlay se existir
         const loadingSubtext = document.getElementById('loading-subtext');
         if (loadingSubtext) {
             loadingSubtext.textContent = message;
         }
     }
 
-    showContent() {
-        const mainContent = document.getElementById('main-content');
-        if (mainContent) {
-            mainContent.classList.remove('content-loading');
-            mainContent.classList.add('content-loaded');
+    // Função para esconder overlay de carregamento
+    hideLoadingOverlay() {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('hidden');
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+            }, 300);
         }
     }
 
@@ -414,7 +444,11 @@ class AvaliacoesViewer {
     }
 
     showError(message) {
-        this.hideLoading();
+        this.hideLoadingState();
+        
+        // Mostrar o conteúdo principal mesmo em erro
+        this.showMainContent();
+        
         const container = document.getElementById('avaliacoes-list');
         if (container) {
             container.innerHTML = `
@@ -427,6 +461,12 @@ class AvaliacoesViewer {
                     </a>
                 </div>
             `;
+        }
+        
+        // Limpar estatísticas se houver erro
+        const statsContainer = document.getElementById('rating-stats');
+        if (statsContainer) {
+            statsContainer.innerHTML = '';
         }
     }
 }
@@ -489,9 +529,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('❌ Erro fatal na inicialização:', error);
             
             // Mostrar erro ao usuário
-            const loadingOverlay = document.getElementById('loading-overlay');
-            if (loadingOverlay) {
-                loadingOverlay.innerHTML = `
+            const loadingContent = document.getElementById('loading-content');
+            if (loadingContent) {
+                loadingContent.innerHTML = `
                     <div class="error-state" style="text-align: center;">
                         <span class="material-icons" style="font-size: 64px; color: #f44336;">error</span>
                         <p class="error-message" style="margin: 16px 0;">Erro ao carregar página</p>
